@@ -1,5 +1,4 @@
 #include "Direct2D.h"
-#include <d3d11.h>
 #include "DXErr.h"
 #pragma comment(lib, "d3d11.lib")
 
@@ -18,7 +17,6 @@ Direct2D::Direct2D( HWND WinHandle )
 		static_cast<uint32_t>( rc.right - rc.left ),
 		static_cast<uint32_t>( rc.bottom - rc.top ) };
 
-	ComPtr<ID3D11Device> pDevic3D;	
 	DXGI_SWAP_CHAIN_DESC scd{};
 	scd.BufferDesc = {
 		winSize.width,
@@ -46,15 +44,15 @@ Direct2D::Direct2D( HWND WinHandle )
 		D3D11_SDK_VERSION,
 		&scd,
 		&m_pSwapchain,
-		&pDevic3D,
+		&m_pDevice3D,
 		nullptr,
-		nullptr
+		&m_pContext3D
 	);
 
 	ComPtr<IDXGIDevice> pDeviceDxgi;
 	if ( SUCCEEDED( hr ) )
 	{
-		pDevic3D.As( &pDeviceDxgi );
+		hr = m_pDevice3D.As( &pDeviceDxgi );
 	}
 	if ( SUCCEEDED( hr ) )
 	{
@@ -62,16 +60,15 @@ Direct2D::Direct2D( HWND WinHandle )
 	}
 	if ( SUCCEEDED( hr ) )
 	{
-		hr = m_pDevice->CreateDeviceContext( D2D1_DEVICE_CONTEXT_OPTIONS{}, &m_pContext );
+		hr = m_pDevice->CreateDeviceContext( D2D1_DEVICE_CONTEXT_OPTIONS_NONE, &m_pContext );
 	}
 
 	Microsoft::WRL::ComPtr<ID3D11Texture2D> pTexture;
+	D3D11_TEXTURE2D_DESC td{};
 	if ( SUCCEEDED( hr ) )
 	{
-		D3D11_TEXTURE2D_DESC td{};
 		m_pSwapchain->GetBuffer( 0, IID_PPV_ARGS( &pTexture ) );
 	}
-
 	auto pSurface = Microsoft::WRL::ComPtr<IDXGISurface>();
 	if ( SUCCEEDED( hr ) )
 	{
@@ -79,12 +76,7 @@ Direct2D::Direct2D( HWND WinHandle )
 	}
 	if ( SUCCEEDED( hr ) )
 	{
-		hr = m_pContext->CreateBitmapFromDxgiSurface(
-			pSurface.Get(),
-			D2D1::BitmapProperties1(
-				D2D1_BITMAP_OPTIONS_TARGET | D2D1_BITMAP_OPTIONS_CANNOT_DRAW,
-				D2D1::PixelFormat( DXGI_FORMAT_B8G8R8A8_UNORM, D2D1_ALPHA_MODE_PREMULTIPLIED )
-			), &m_pRenderTarget );
+		hr = m_pContext->CreateBitmapFromDxgiSurface( pSurface.Get(), nullptr, &m_pRenderTarget );
 	}
 	if ( SUCCEEDED( hr ) )
 	{
@@ -113,6 +105,7 @@ void Direct2D::EndFrame()
 	auto hr = m_pContext->EndDraw();
 	if ( FAILED( hr ) )
 		throw( Direct2D::Exception( hr, L"Failed at EndFrame()" ));
+	m_pSwapchain->Present( 1, 0 );
 	/*if ( hr == D2DERR_RECREATE_TARGET )
 	{
 		m_pRenderTarget.Reset();
@@ -151,13 +144,25 @@ void Direct2D::DrawBox( float X, float Y, float Width, float Height, const D2D1_
 	auto drawfunc = ( Outline == TRUE ) ? ( DrawFunc )drawOutline : ( DrawFunc )drawNoOutline;
 	
 	drawfunc( m_pContext.Get(), rect, m_pSolidBrush.Get() );
-	/*if ( !Outline )
-	{
-		m_pContext->FillRectangle( rect, m_pSolidBrush.Get() );
-		return;
-	}
+	
+}
 
-	m_pContext->DrawRectangle( rect, m_pSolidBrush.Get() );*/
+void Direct2D::DrawCircle( float X, float Y, float Radius, const D2D1_COLOR_F & Color, BOOL Outline )
+{
+	m_pSolidBrush->SetColor( Color );
+
+	D2D1_ELLIPSE ellipse{};
+	ellipse.point = { X, Y };
+	ellipse.radiusX = ellipse.radiusY = Radius;
+
+	if ( Outline == TRUE )
+	{
+		m_pContext->DrawEllipse( ellipse, m_pSolidBrush.Get() );
+	}
+	else
+	{
+		m_pContext->FillEllipse( ellipse, m_pSolidBrush.Get() );
+	}
 }
 
 Direct2D::Exception::Exception( HRESULT hr, std::wstring&& note, std::wstring&& file, unsigned int line )

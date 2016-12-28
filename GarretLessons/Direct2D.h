@@ -1,6 +1,7 @@
 #pragma once
 
 #include <d2d1_1.h>
+#include <d3d11.h>
 #include <wrl/client.h>
 #include <string>
 
@@ -36,11 +37,15 @@ public:
 
 
 private:
+	Microsoft::WRL::ComPtr<ID3D11Device> m_pDevice3D;
+	Microsoft::WRL::ComPtr<ID3D11DeviceContext> m_pContext3D;
+	Microsoft::WRL::ComPtr<IDXGISwapChain> m_pSwapchain;
+
 	Microsoft::WRL::ComPtr<ID2D1Device> m_pDevice;
 	Microsoft::WRL::ComPtr<ID2D1DeviceContext> m_pContext;
 	Microsoft::WRL::ComPtr<ID2D1Bitmap1> m_pRenderTarget;
 	Microsoft::WRL::ComPtr<ID2D1SolidColorBrush> m_pSolidBrush;
-	Microsoft::WRL::ComPtr<IDXGISwapChain> m_pSwapchain;
+
 	HWND m_winHandle;
 };
 

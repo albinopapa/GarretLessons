@@ -61,6 +61,7 @@ void ComposeFrame(Direct2D &D2D)
 {
 	D2D.DrawBox( 300.f, 200.f, 100.f, 100.f, { 1.f, 1.f, 1.f, 1.f } );
 	D2D.DrawBox( 300.f, 200.f, 100.f, 100.f, { 1.f, 0.f, 1.f, 1.f }, FALSE );
+	D2D.DrawCircle( 400.f, 300.f, 50.f, { 1.f, 0.f, 0.f, 1.f } );
 }
 
 int WINAPI WinMain( HINSTANCE, HINSTANCE, LPSTR, int )
