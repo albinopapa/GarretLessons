@@ -1,4 +1,5 @@
 #include <Windows.h>
+#include "Direct2D.h"
 
 LRESULT CALLBACK MessageCallback( HWND WinHandle, UINT MessageID, WPARAM wParam, LPARAM lParam )
 {
@@ -6,8 +7,9 @@ LRESULT CALLBACK MessageCallback( HWND WinHandle, UINT MessageID, WPARAM wParam,
 
 	switch ( MessageID )
 	{
-		case WM_DESTROY:
+		case WM_DESTROY: 
 			PostQuitMessage( 0 );
+			break;
 	}
 
 	lResult = DefWindowProc( WinHandle, MessageID, wParam, lParam );
@@ -39,54 +41,112 @@ private:
 	LPCWSTR m_classname;
 	HINSTANCE m_instance;
 };
+class ComManager
+{
+public:
+	ComManager();
+	~ComManager();
+};
+
+void ComposeFrame( Direct2D &D2D );
+
+void Go( Direct2D &D2D )
+{
+	D2D.BeginFrame( 0.f, 0.f, 0.f );
+	ComposeFrame( D2D );
+	D2D.EndFrame();
+}
+
+void ComposeFrame(Direct2D &D2D)
+{
+	D2D.DrawBox( 300.f, 200.f, 100.f, 100.f, { 1.f, 1.f, 1.f, 1.f } );
+	D2D.DrawBox( 300.f, 200.f, 100.f, 100.f, { 1.f, 0.f, 1.f, 1.f }, FALSE );
+}
+
 int WINAPI WinMain( HINSTANCE, HINSTANCE, LPSTR, int )
 {
+	ComManager comManager;
+
 	auto instance = GetModuleHandle( nullptr );
 	const auto classname = L"MyClass";
-	const auto winTitle = L"G is a goof-ball.";
-
 	WndClass wc( classname, instance, MessageCallback );
 
-	const auto windowStyle = WS_OVERLAPPEDWINDOW;
-	const auto exWindowStyle = WS_EX_OVERLAPPEDWINDOW;
+	HWND winHandle = [&classname, instance]{
+		const auto winTitle = L"Garret's programming lessons.";
 
-	const int x = 0;
-	const int y = 0;
+		const auto windowStyle = WS_OVERLAPPEDWINDOW;
+		const auto exWindowStyle = WS_EX_OVERLAPPEDWINDOW;
 
-	const RECT wr = []( int X, int Y, int Width, int Height )
-	{
-		RECT wr{X, Y, X + Width, Y + Height};
-		AdjustWindowRectEx( &wr, windowStyle, FALSE, exWindowStyle );
+		const int x = 0;
+		const int y = 0;
 
-		return wr;
-	}( x, y, 800, 600 );
-	const int windowWidth = []( const RECT &R ) { return R.right - R.left; }( wr );
-	const int windowHeight = []( const RECT &R ) { return R.bottom - R.top; }( wr );
+		const RECT wr = [ &windowStyle, &exWindowStyle ]( int X, int Y, int Width, int Height )
+		{
+			RECT wr{ X, Y, X + Width, Y + Height };
+			AdjustWindowRectEx( &wr, windowStyle, FALSE, exWindowStyle );
 
-	HWND winHandle = CreateWindowEx(
-		exWindowStyle, classname, winTitle, windowStyle,
-		x, y, windowWidth, windowHeight, nullptr, nullptr, instance,
-		nullptr
-	);
+			return wr;
+		}( x, y, 800, 600 );
+		const int windowWidth = []( const RECT &R ) { return R.right - R.left; }( wr );
+		const int windowHeight = []( const RECT &R ) { return R.bottom - R.top; }( wr );
+
+		return CreateWindowEx(
+			exWindowStyle, classname, winTitle, windowStyle,
+			x, y, windowWidth, windowHeight, nullptr, nullptr, instance,
+			nullptr
+		);
+	}( );
 
 	if ( IsWindow( winHandle ) == FALSE ) return -1;
-
 	ShowWindow( winHandle, SW_SHOWDEFAULT );
-
-	MSG msg{};
-	while ( true )
+	
+	[winHandle]()
 	{
-		while ( PeekMessage( &msg, nullptr, 0u, 0u, PM_REMOVE ) )
+		MSG msg{};
+		try
 		{
-			TranslateMessage( &msg );
-			DispatchMessage( &msg );
-		}
+			Direct2D d2d( winHandle );
 
-		if ( msg.message == WM_QUIT )
-		{
-			break;
+			while ( true )
+			{
+				while ( PeekMessage( &msg, nullptr, 0u, 0u, PM_REMOVE ) )
+				{
+					TranslateMessage( &msg );
+					DispatchMessage( &msg );
+				}
+
+				if ( msg.message == WM_QUIT ) return;
+				try
+				{
+					Go( d2d );
+				}
+				catch ( Direct2D::Exception e )
+				{
+					const auto errMsg = e.GetFullMessage();
+					MessageBox( nullptr, errMsg.c_str(), L"Error", MB_ABORTRETRYIGNORE );
+					return;
+				}
+
+			}
 		}
-	}
+		catch ( Direct2D::Exception e )
+		{
+			const auto errMsg = e.GetFullMessage();
+			MessageBox( nullptr, errMsg.c_str(), L"Error", MB_ABORTRETRYIGNORE );
+			return;
+		}
+		
+	}();
 
 	return 0;
+}
+
+ComManager::ComManager()
+{
+	CoInitialize( nullptr );
+}
+
+ComManager::~ComManager()
+{
+	CoUninitialize();
 }
