@@ -142,14 +142,20 @@
     </Link>
   </ItemDefinitionGroup>
   <ItemGroup>
+    <ClCompile Include="Circle.cpp" />
     <ClCompile Include="Direct2D.cpp" />
     <ClCompile Include="DXErr.cpp" />
+    <ClCompile Include="Game.cpp" />
+    <ClCompile Include="Keyboard.cpp" />
     <ClCompile Include="Main.cpp" />
   </ItemGroup>
   <ItemGroup>
+    <ClInclude Include="Circle.h" />
     <ClInclude Include="Direct2D.h" />
     <ClInclude Include="DXErr.h" />
     <ClInclude Include="Exception.h" />
+    <ClInclude Include="Game.h" />
+    <ClInclude Include="Keyboard.h" />
   </ItemGroup>
   <Import Project="$(VCTargetsPath)\Microsoft.Cpp.targets" />
   <ImportGroup Label="ExtensionTargets">

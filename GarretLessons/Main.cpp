@@ -1,5 +1,7 @@
 #include <Windows.h>
-#include "Direct2D.h"
+#include "Game.h"
+
+Keyboard *kbd;
 
 LRESULT CALLBACK MessageCallback( HWND WinHandle, UINT MessageID, WPARAM wParam, LPARAM lParam )
 {
@@ -7,6 +9,16 @@ LRESULT CALLBACK MessageCallback( HWND WinHandle, UINT MessageID, WPARAM wParam,
 
 	switch ( MessageID )
 	{
+		case WM_KEYDOWN:
+		{
+			kbd->KeyPress( static_cast< int >( wParam ) );
+			break;
+		}
+		case WM_KEYUP:
+		{
+			kbd->KeyRelease( static_cast< int >( wParam ) );
+			break;
+		}
 		case WM_DESTROY: 
 			PostQuitMessage( 0 );
 			break;
@@ -47,22 +59,6 @@ public:
 	ComManager();
 	~ComManager();
 };
-
-void ComposeFrame( Direct2D &D2D );
-
-void Go( Direct2D &D2D )
-{
-	D2D.BeginFrame( 0.f, 0.f, 0.f );
-	ComposeFrame( D2D );
-	D2D.EndFrame();
-}
-
-void ComposeFrame(Direct2D &D2D)
-{
-	D2D.DrawBox( 300.f, 200.f, 100.f, 100.f, { 1.f, 1.f, 1.f, 1.f } );
-	D2D.DrawBox( 300.f, 200.f, 100.f, 100.f, { 1.f, 0.f, 1.f, 1.f }, FALSE );
-	D2D.DrawCircle( 400.f, 300.f, 50.f, { 1.f, 0.f, 0.f, 1.f } );// This line
-}
 
 int WINAPI WinMain( HINSTANCE, HINSTANCE, LPSTR, int )
 {
@@ -106,7 +102,8 @@ int WINAPI WinMain( HINSTANCE, HINSTANCE, LPSTR, int )
 		MSG msg{};
 		try
 		{
-			Direct2D d2d( winHandle );
+			Game tree( winHandle );
+			kbd = tree.GetKeyboard();
 
 			while ( true )
 			{
@@ -119,7 +116,7 @@ int WINAPI WinMain( HINSTANCE, HINSTANCE, LPSTR, int )
 				if ( msg.message == WM_QUIT ) return;
 				try
 				{
-					Go( d2d );
+					tree.Go();
 				}
 				catch ( Direct2D::Exception e )
 				{
