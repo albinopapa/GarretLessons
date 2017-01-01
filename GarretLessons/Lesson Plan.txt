@@ -1,0 +1,30 @@
+TODO
+	Clamp circle to top, bottom, left and right sides of screen.
+	
+	Add box (obstacles)
+		Create a Box class.
+		Declare a position for the Box class, float x, y;
+		Declare a size for the box class, float size;
+		Declare a velocity for boxes, float vx, vy;
+		Declare a color for the box class, D2D1::ColorF color;
+		Declare a constructor for setting the initial position, size and color of a box object.
+			Box(float X, float Y, float Size, const D2D1::ColorF &Color);
+
+	Create three Box objects in Game class, pass in variables to Box constructor
+
+	Test collision between two box objects
+	Test collision between circle and box objects
+
+	Make boxes move on their own around the screen
+		Clamp boxes to screen edges
+		When boxes meet screen edges, change directions
+
+	Add target to move circle to.
+
+	Add stationary boxes as obstacles for circle and boxes.
+
+	GAME CONTROL
+		Determine if game has started
+		Determine if game is over
+			Circle is hit by a moving box
+			Circle has collected 10 targets
